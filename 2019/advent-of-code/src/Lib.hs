@@ -1,6 +1,8 @@
 module Lib
-    ( someFunc
+    ( printOutput
     ) where
 
-someFunc :: IO ()
-someFunc = putStrLn "someFunc"
+import One
+
+printOutput :: IO ()
+printOutput = printSum
