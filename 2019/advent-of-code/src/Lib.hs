@@ -2,7 +2,7 @@ module Lib
     ( printOutput
     ) where
 
-import Two
+import Three
 
 printOutput :: IO ()
 printOutput = printSum
