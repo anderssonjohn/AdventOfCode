@@ -4,6 +4,7 @@ import Data.Map (Map)
 import Data.List.Split
 import qualified Data.Map.Strict as Map
 import Data.Maybe (fromJust)
+import Data.List
 
 printSum :: IO ()
 printSum = do
@@ -12,7 +13,7 @@ printSum = do
   let b = fillValues (0,0) (lss !! 1)
   let b1 = Map.fromListWith (++) $ map (\(a1,a2) -> (a1,[a2])) $ fillValues (0,0) (lss !! 1)
   let intersections = findIntersections a b1
-  print $ foldl min maxBound $ map (\point -> findDistance point a 0 + findDistance point b 0) intersections
+  print $ foldl' min maxBound $ map (\point -> findDistance point a 0 + findDistance point b 0) intersections
   return ()
 
 findDistance :: (Int,Int) -> [(Int,Int)] -> Int -> Int
