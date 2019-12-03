@@ -9,17 +9,17 @@ printSum :: IO ()
 printSum = do
   lss  <- readInputs
   let a = fillValues (0,0) (lss !! 0)
-  let b = Map.fromList $ fillValues (0,0) (lss !! 1)
+  let b = Map.fromListWith (++) $ map (\(a1,a2) -> (a1,[a2])) $ fillValues (0,0) (lss !! 1)
   print $ findIntersection a b
   return ()
 
-findIntersection :: [(Int,Int)] -> Map.Map Int Int -> Int
+findIntersection :: [(Int,Int)] -> Map.Map Int [Int] -> Int
 findIntersection x y = foldl min maxBound (map (\(a,b) -> (abs a) + (abs b)) $ filter filterFun x)
   where
-    filterFun = (\(a1, a2) -> (justFun a1) == a2 && (a1 /= 0 || a2 /= 0))
-    justFun val = case Map.lookup val y of
-      Just a -> a
-      Nothing -> maxBound
+    filterFun = (\(a1, a2) -> (justFun a1 a2) && (a1 /= 0 || a2 /= 0))
+    justFun val val2 = case Map.lookup val y of
+      Just ls -> val2 `elem` ls
+      Nothing -> False
 
 fillValues :: (Int,Int) -> [String] -> [(Int,Int)]
 fillValues _ [] = []
