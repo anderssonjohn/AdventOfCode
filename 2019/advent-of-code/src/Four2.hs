@@ -1,4 +1,4 @@
-module Four where
+module Four2 where
 
 printSum :: IO ()
 printSum = do
@@ -7,12 +7,10 @@ printSum = do
   return ()
 
 generateList :: Int -> Int -> [Int]
-generateList min max = filter passwordCheck [min..max]
+generateList min max = filter (passwordCheck . digs) [min..max]
 
-passwordCheck :: Int -> Bool
-passwordCheck val = increasing digits && containsDouble digits
-  where
-    digits = digs val
+passwordCheck :: [Int] -> Bool
+passwordCheck digits = increasing digits && containsExactDouble digits
 
 increasing :: [Int] -> Bool
 increasing (x:y:xs)
@@ -20,11 +18,14 @@ increasing (x:y:xs)
   | otherwise = False
 increasing (x:xs) = True
 
-containsDouble :: [Int] -> Bool
-containsDouble (x:y:xs)
-  | x == y = True
-  | otherwise = containsDouble (y:xs)
-containsDouble (x:xs) = False
+containsExactDouble :: [Int] -> Bool
+containsExactDouble (a:b:c:d:e:f:_) = (ab && not bc) || (not ab && bc && not cd) || (not bc && cd && not de) || (not cd && de && not ef) || (not de && ef)
+  where
+    ab = a == b
+    bc = b == c
+    cd = c == d
+    de = d == e
+    ef = e == f
 
 readInput :: IO (Int, Int)
 readInput = do
