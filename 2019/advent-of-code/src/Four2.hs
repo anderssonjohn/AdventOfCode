@@ -34,5 +34,9 @@ readInput = do
   return (read a, read b)
 
 digs :: Integral x => x -> [x]
-digs 0 = []
-digs x = digs (x `div` 10) ++ [x `mod` 10]
+digs x = [mod (x `div` 100000) 10,
+          mod (x `div` 10000) 10,
+          mod (x `div` 1000) 10,
+          mod (x `div` 100) 10,
+          mod (x `div` 10) 10,
+          mod x 10]
