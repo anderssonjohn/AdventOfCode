@@ -1,16 +1,13 @@
-module One
-  (printSum
-  ) where
+module Day01.One where
 
-printSum :: IO ()
-printSum = do
+b :: IO ()
+b = do
     inputs <- readInputs
     print $ sum $ map calculateFuel2 inputs
 
-
 readInputs :: IO [Integer]
 readInputs = do
-    input <- readFile "resources/input1.txt"
+    input <- readFile "src/Day01/input.txt"
     return $  map read $ lines input
 
 calculateFuel :: Integer -> Integer

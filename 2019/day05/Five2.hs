@@ -2,18 +2,18 @@ module Five2 where
 
 import Data.List.Split
 
-printSum :: IO ()
-printSum = do
-  program <- readInputs
+b :: IO ()
+b = do
+  program <- readProgram
   performProgram program 0
 
-readInputs :: IO [Int]
-readInputs = do
+readProgram :: IO [Int]
+readProgram = do
     input <- readFile "resources/input5.txt"
     return $ map read $ splitOn "," (head $ lines input)
 
-readInput2 :: IO [Int]
-readInput2 = do
+readInput :: IO [Int]
+readInput = do
   input <- readFile "resources/input5.3.txt"
   return $ ((map read) . lines) input
 
@@ -28,7 +28,7 @@ performProgram ls index = do
         let [v3,v2,v1] = getValues (index + 1) ls modes
         performProgram (replaceAtIndex v3 (v1 * v2) ls) (index + 4)
       [_,3] -> do
-        [val] <- readInput2
+        [val] <- readInput
         performProgram (replaceAtIndex (ls !! (index + 1)) val ls) (index + 2)
       [_,4] -> do
         let [v3,v2,v1] = getValues (index + 1) ls modes
