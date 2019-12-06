@@ -2,20 +2,18 @@ module Five2 where
 
 import Data.List.Split
 
-b :: IO ()
-b = do
+main :: IO ()
+main = do
   program <- readProgram
   performProgram program 0
 
 readProgram :: IO [Int]
 readProgram = do
-    input <- readFile "resources/input5.txt"
+    input <- readFile "input5.txt"
     return $ map read $ splitOn "," (head $ lines input)
 
 readInput :: IO [Int]
-readInput = do
-  input <- readFile "resources/input5.3.txt"
-  return $ ((map read) . lines) input
+readInput = return [5] -- Change to [1] to run part a
 
 performProgram :: [Int] -> Int -> IO ()
 performProgram ls index = do
