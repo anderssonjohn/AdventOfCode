@@ -1,4 +1,3 @@
-module Day06 where
 import Data.List.Split
 import Data.Map (Map)
 import Data.List
@@ -38,15 +37,16 @@ calculateDistance ls = do
 
 findPath :: (Map String [String]) -> String -> [String]
 findPath mp node = case Map.lookup "COM" mp of
-  Just ls -> findPath' mp "COM" node []
+  Just ls -> findPath' mp node "COM"
   Nothing -> [":("]
 
-findPath' :: (Map String [String]) -> String -> String -> [String] -> [String]
-findPath' mp from to curr = case Map.lookup from mp of
-  Just ls -> if to `elem` ls then to:curr
-    else curr ++ (concat (filter ((1 <) . length) (map (\s -> from:(findPath' mp s to curr)) ls)))
+findPath' :: (Map String [String]) -> String -> String -> [String]
+findPath' mp to from = case Map.lookup from mp of
+  Just ls -> if to `elem` ls then [to]
+    else case find (not . null) (map (findPath' mp to) ls) of
+           Just a -> from:a
+           Nothing -> []
   Nothing -> []
-
 ----------- Code for part b ------------------
 
 ----------- Code for part a ------------------
