@@ -32,9 +32,6 @@ calculateDistance ls = do
   let sanPath = findPath mp "SAN"
   let intersection = intersect youPath sanPath
   let result = (youPath \\ intersection) ++ (sanPath \\ intersection)
-  print result
-  print youPath
-  print sanPath
   print $ length result - 2
   return ()
 
