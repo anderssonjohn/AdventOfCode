@@ -32,7 +32,10 @@ calculateDistance ls = do
   let sanPath = findPath mp "SAN"
   let intersection = intersect youPath sanPath
   let result = (youPath \\ intersection) ++ (sanPath \\ intersection)
-  print $ length result
+  print result
+  print youPath
+  print sanPath
+  print $ length result - 2
   return ()
 
 findPath :: (Map String [String]) -> String -> [String]
@@ -42,7 +45,7 @@ findPath mp node = case Map.lookup "COM" mp of
 
 findPath' :: (Map String [String]) -> String -> String -> [String]
 findPath' mp to from = case Map.lookup from mp of
-  Just ls -> if to `elem` ls then [to]
+  Just ls -> if to `elem` ls then from:[to]
     else case find (not . null) (map (findPath' mp to) ls) of
            Just a -> from:a
            Nothing -> []
