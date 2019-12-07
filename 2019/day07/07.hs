@@ -25,17 +25,89 @@ testA3 = do
   input <- readInput "test3.txt"
   mainA input
 
-test2 :: IO ()
-test2 = do
-  input <- readInput "testInput2.txt"
+testB1 :: IO ()
+testB1 = do
+  input <- readInput "test4.txt"
   mainB input
 
+testB2 :: IO ()
+testB2 = do
+  input <- readInput "test5.txt"
+  mainB input
 
 ----------- Code for part b ------------------
 mainB :: [Int] -> IO ()
-mainB input = do
-  return ()
+mainB ls = do
+  let perms = permutations [5,6,7,8,9]
+  let programs = map (instantiatePrograms ls) perms
+
+  outputs <- mapM (runUntilHalt 0) programs
+  print $ maximum $ concat outputs
+
+runUntilHalt :: Int -> [(Int,[Int])] -> IO [Int]
+runUntilHalt input lss = do
+  (output,ls'@((index,_):_)) <- feedback lss input
+  if index == -1 then return [output]
+  else do
+    list <- runUntilHalt output ls'
+    return $ (output):list
+
+feedback :: [(Int,[Int])] -> Int -> IO (Int,[(Int,[Int])])
+feedback lss input = foldM (\(i,newPrgs) (index,ls) -> fn i index ls >>= \(output,prg) -> return (output,newPrgs ++ [prg])) (input,[]) lss
+
+fn :: Int -> Int -> [Int] -> IO (Int,(Int,[Int]))
+fn input index ls = performProgramB ls index input
+
+instantiatePrograms :: [Int] -> [Int] -> [(Int,[Int])]
+instantiatePrograms ls settings = map (\ps -> (2,replaceAtIndex (ls !! 1) ps ls)) settings
+
+{-
+  When the program outputs something its execution is stopped.
+  It then returns the output, the index to continue at, and the updated program.
+  This so that when Amp A outputs a value Amp B can start its execution immediately,
+  with the input from A, until it outputs a value which is fed to Amp C, and so on.
+  The index has to be saved so the program continues from the same state it stopped.
+-}
+performProgramB :: [Int] -> Int -> Int -> IO (Int, (Int,[Int]))
+performProgramB ls index input = do
+    let (modes, op) = splitAt 3 $ genNum $ ls !! index
+    case op of
+      [_,1] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        let newLs = (replaceAtIndex v3 (v1 + v2) ls)
+        performProgramB newLs (index + 4) input
+      [_,2] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        let newLs = (replaceAtIndex v3 (v1 * v2) ls)
+        performProgramB newLs (index + 4) input
+      [_,3] -> do
+        let newLs = (replaceAtIndex (ls !! (index + 1)) input ls)
+        performProgramB newLs (index + 2) input
+      [_,4] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        return (v1,(index + 2,ls))
+      [_,5] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        if v1 /= 0 then do
+          performProgramB ls v2 input
+        else performProgramB ls (index + 3) input
+      [_,6] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        if v1 == 0 then do
+          performProgramB ls v2 input
+        else performProgramB ls (index + 3) input
+      [_,7] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        if v1 < v2 then performProgramB (replaceAtIndex v3 1 ls) (index + 4) input
+        else performProgramB (replaceAtIndex v3 0 ls) (index + 4) input
+      [_,8] -> do
+        let [v3,v2,v1] = getValues (index + 1) ls modes
+        if v1 == v2 then performProgramB (replaceAtIndex v3 1 ls) (index + 4) input
+        else performProgramB (replaceAtIndex v3 0 ls) (index + 4) input
+      [9,9] -> do
+        return (input,(-1,ls))
 ----------- Code for part b ------------------
+
 ----------- Code for part a ------------------
 mainA :: [Int] -> IO ()
 mainA ls = do
@@ -49,8 +121,6 @@ performFold ls input phaseSetting = do
   performProgram newLs 2 input
 
 ----------- Code for part a ------------------
--- readProgramInput :: IO [Int]
--- readProgramInput = return [5] -- Change to [1] to run part a
 
 
 performProgram :: [Int] -> Int -> Int -> IO (Int)
@@ -64,13 +134,10 @@ performProgram ls index input = do
         let [v3,v2,v1] = getValues (index + 1) ls modes
         performProgram (replaceAtIndex v3 (v1 * v2) ls) (index + 4) input
       [_,3] -> do
-        -- [val] <- readProgramInput
-        -- performProgram (replaceAtIndex (ls !! (index + 1)) val ls) (index + 2)
         performProgram (replaceAtIndex (ls !! (index + 1)) input ls) (index + 2) input
       [_,4] -> do
         let [v3,v2,v1] = getValues (index + 1) ls modes
         return v1
-        -- performProgram ls (index + 2)
       [_,5] -> do
         let [v3,v2,v1] = getValues (index + 1) ls modes
         if v1 /= 0 then performProgram ls v2 input
