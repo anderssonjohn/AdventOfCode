@@ -44,19 +44,20 @@ mainB ls = do
   outputs <- mapM (runUntilHalt 0) programs
   print $ maximum $ concat outputs
 
+-- Returns the list of all outputs from the program until it halts
 runUntilHalt :: Int -> [(Int,[Int])] -> IO [Int]
 runUntilHalt input lss = do
-  (output,ls'@((index,_):_)) <- feedback lss input
-  if index == -1 then return [output]
+  (output,ls'@((index,_):_)) <- runIteration lss input
+  if index == -1 then return [output] -- An index of -1 indicates the program has halted
   else do
     list <- runUntilHalt output ls'
     return $ (output):list
 
-feedback :: [(Int,[Int])] -> Int -> IO (Int,[(Int,[Int])])
-feedback lss input = foldM (\(i,newPrgs) (index,ls) -> fn i index ls >>= \(output,prg) -> return (output,newPrgs ++ [prg])) (input,[]) lss
+runIteration :: [(Int,[Int])] -> Int -> IO (Int,[(Int,[Int])])
+runIteration lss input = foldM (\(input,newPrgs) (index,ls) -> performProgramB ls index input >>= appendOutput newPrgs) (input,[]) lss
 
-fn :: Int -> Int -> [Int] -> IO (Int,(Int,[Int]))
-fn input index ls = performProgramB ls index input
+appendOutput :: [(Int,[Int])]-> (Int,(Int,[Int])) -> IO (Int,[(Int,[Int])])
+appendOutput list (output,prg) = return (output,list ++ [prg])
 
 instantiatePrograms :: [Int] -> [Int] -> [(Int,[Int])]
 instantiatePrograms ls settings = map (\ps -> (2,replaceAtIndex (ls !! 1) ps ls)) settings
