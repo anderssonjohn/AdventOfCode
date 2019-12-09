@@ -11,12 +11,12 @@ b = do
 
 test1 :: IO ()
 test1 = do
-  input <- readInput "testInput1.txt"
+  input <- readInput "test1.txt"
   mainA input
 
 test2 :: IO ()
 test2 = do
-  input <- readInput "testInput2.txt"
+  input <- readInput "test2.txt"
   mainB input
 
 
