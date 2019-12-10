@@ -1,11 +1,11 @@
 import Data.List.Split
-import Data.List hiding ((!!))
+import Data.List hiding ((!!), insert)
 import Prelude hiding ((!!))
-
--- TODO: use IntMap
+import Data.IntMap (IntMap, insert)
+import qualified Data.IntMap as IntMap
 
 main :: IO ()
-main = a
+main = b
 
 a :: IO ()
 a = do
@@ -14,40 +14,45 @@ a = do
 
 b :: IO ()
 b = do
+  input <- readInput "input.txt"
+  mainB input
+
+sune :: IO ()
+sune = do
   input <- readInput "sune.txt"
   mainB input
 
-testA1 :: IO ()
-testA1 = do
+test1 :: IO ()
+test1 = do
   input <- readInput "test1.txt"
   mainA input
-testA2 :: IO ()
-testA2 = do
+
+test2 :: IO ()
+test2 = do
   input <- readInput "test2.txt"
   mainA input
-testA3 :: IO ()
-testA3 = do
+
+test3 :: IO ()
+test3 = do
   input <- readInput "test3.txt"
   mainA input
 
 
 
 ----------- Code for part b ------------------
-mainB :: [Integer] -> IO ()
-mainB ls' = do
-  let ls = ls' ++ (replicate 10000 0)
+mainB :: IntMap Integer -> IO ()
+mainB ls = do
   (a,b,c) <- performProgramB ls 0 2 0
   return ()
 ----------- Code for part b ------------------
 ----------- Code for part a ------------------
 
-mainA :: [Integer] -> IO ()
-mainA ls' = do
-  let ls = ls' ++ (replicate 10000 0)
+mainA :: IntMap Integer -> IO ()
+mainA ls = do
   (a,b,c) <- performProgramB ls 0 1 0
   return ()
 
-type Program = (Integer, Integer, (Integer, [Integer]))
+type Program = (Integer, Integer, (Int, IntMap Integer))
 {-
   When the program outputs something its execution is stopped.
   It then returns the output, the index to continue at, and the updated program.
@@ -56,68 +61,68 @@ type Program = (Integer, Integer, (Integer, [Integer]))
   The index has to be saved so the program continues from the same state it stopped.
 -}
 
-(!!) = (genericIndex)
-performProgramB :: [Integer] -> Integer -> Integer -> Integer -> IO Program
+(!) :: IntMap Integer -> Int -> Integer
+(!) mapp key = case mapp IntMap.!? key of
+  Just a -> a
+  Nothing -> 0
+
+performProgramB :: IntMap Integer -> Int -> Integer -> Integer -> IO Program
 performProgramB ls index input rbase = do
-    let (modes, op) = splitAt 3 $ genNum $ ls !! index
+    let (modes, op) = splitAt 3 $ genNum $ ls ! index
     let [v3,v2,v1] = getValues (index + 1) ls modes rbase
     case op of
       [_,1] -> do
-        let newLs = (replaceAtIndex v3 (v1 + v2) ls)
+        let newLs = insert (frI v3) (v1 + v2) ls
         performProgramB newLs (index + 4) input rbase
       [_,2] -> do
-        let newLs = (replaceAtIndex v3 (v1 * v2) ls)
+        let newLs = (insert (frI v3) (v1 * v2) ls)
         performProgramB newLs (index + 4) input rbase
       [_,3] -> do
         let index1 = case (last modes) of
-                      2 -> rbase + (ls `genericIndex` (index + 1))
-                      1 -> index + 1
-                      0 -> ls `genericIndex` (index + 1)
-        let newLs = (replaceAtIndex index1 input ls)
+                      2 -> rbase + (ls ! (index + 1))
+                      1 -> (toInteger index) + 1
+                      0 -> ls ! (index + 1)
+        let newLs = (insert (frI index1) input ls)
         performProgramB newLs (index + 2) input rbase
       [_,4] -> do
         print v1
         performProgramB ls (index + 2) input rbase
       [_,5] -> do
         if v1 /= 0 then do
-          performProgramB ls v2 input rbase
+          performProgramB ls (frI v2) input rbase
         else performProgramB ls (index + 3) input rbase
       [_,6] -> do
         if v1 == 0 then do
-          performProgramB ls v2 input rbase
+          performProgramB ls (frI v2) input rbase
         else performProgramB ls (index + 3) input rbase
       [_,7] -> do
-        if v1 < v2 then performProgramB (replaceAtIndex v3 1 ls) (index + 4) input rbase
-        else performProgramB (replaceAtIndex v3 0 ls) (index + 4) input rbase
+        if v1 < v2 then performProgramB (insert (frI v3) 1 ls) (index + 4) input rbase
+        else performProgramB (insert (frI v3) 0 ls) (index + 4) input rbase
       [_,8] -> do
-        if v1 == v2 then performProgramB (replaceAtIndex v3 1 ls) (index + 4) input rbase
-        else performProgramB (replaceAtIndex v3 0 ls) (index + 4) input rbase
+        if v1 == v2 then performProgramB (insert (frI v3) 1 ls) (index + 4) input rbase
+        else performProgramB (insert (frI v3) 0 ls) (index + 4) input rbase
       [0,9] -> do
         performProgramB ls (index + 2) input (rbase + v1)
       [9,9] -> do
         return (input,rbase,(-1,ls))
 
-getValues :: Integer -> [Integer] -> [Integer] -> Integer-> [Integer]
-getValues index ls [m3,m2,m1] rbase = [index3, ls !! index2, ls !! index1]
+frI = fromInteger
+
+getValues :: Int -> IntMap Integer -> [Integer] -> Integer-> [Integer]
+getValues index ls [m3,m2,m1] rbase = [index3, ls ! (frI index2), ls ! (frI index1)]
   where
     index1 = case m1 of
-      2 -> rbase + (ls !! index)
-      1 -> index
-      0 -> ls !! index
+      2 -> rbase + (ls ! index)
+      1 -> toInteger index
+      0 -> ls ! index
     index2 = case m2 of
-      2 -> rbase + (ls !! (index + 1))
-      1 -> index + 1
-      0 -> ls !! (index + 2)
+      2 -> rbase + (ls ! (index + 1))
+      1 -> toInteger $ index + 1
+      0 -> ls ! (index + 2)
     index3 = case m3 of
-      2 -> rbase + (ls !! (index + 2))
-      1 -> index + 2
-      0 -> ls !! (index + 2)
-
-replaceAtIndex :: Integer -> a -> [a] -> [a]
-replaceAtIndex n' item ls = a ++ (item:b)
-  where
-    n = fromIntegral n'
-    (a, (_:b)) = splitAt n ls
+      2 -> rbase + (ls ! (index + 2))
+      1 -> toInteger $ index + 2
+      0 -> ls ! (index + 2)
 
 genNum :: Integer -> [Integer]
 genNum x = [mod (x `div` 10000) 10,
@@ -129,10 +134,14 @@ genNum x = [mod (x `div` 10000) 10,
 
 
 ----------- Input ----------------------------
-readInput :: String -> IO [Integer]
+readInput :: String -> IO (IntMap Integer)
 readInput filePath = do
   input <- readFile filePath
   return $ formatInput input
 
-formatInput :: String -> [Integer]
-formatInput input = map read $ splitOn "," (head (lines input))
+formatInput :: String -> IntMap Integer
+formatInput input = intMap
+  where
+    intMap = IntMap.fromList ls'
+    ls = map read $ splitOn "," (head (lines input))
+    ls' = zip [0..] ls
