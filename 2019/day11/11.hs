@@ -42,8 +42,11 @@ mainB :: IntMap Integer -> IO ()
 mainB ls = do
   let hull = Map.insert (0,0) 1 Map.empty
   (a,b,c,d) <- performProgramB ls 0 0 ((0,0),0) hull 1
-  print $ map fst $ Map.toList c
+  mapM_ putStrLn $ reverse $ formatOutput c
   return ()
+
+formatOutput :: Hull -> [String]
+formatOutput mapp = [ [if (Map.findWithDefault 0 (x,y) mapp) == 0 then '.' else '#' | x <- [(0 ::Int)..42]  ] | y <- [(-5 :: Int)..0] ]
 ----------- Code for part b ------------------
 ----------- Code for part a ------------------
 
@@ -87,28 +90,20 @@ performProgramB ls index rbase robot@(pos,dir) hull outputOneOrTwo = do
         performProgramB newLs (index + 4) rbase robot hull outputOneOrTwo
       [_,3] -> do
         let index1 = calculateIndex (index + 1) ls (last modes) rbase
-        -- let index1 = case (last modes) of
-        --       2 -> rbase + (ls ! (index + 1))
-        --       1 -> (toInteger index) + 1
-        --       0 -> ls ! (index + 1)
-
         let val = Map.findWithDefault 0 pos hull
         let newLs = insert (frI index1) val ls
         performProgramB newLs (index + 2) rbase robot hull outputOneOrTwo
       [_,4] -> do
-        -- case v1 of
-          -- (-7) -> return (0,rbase,hull,(-1,ls))
-          case outputOneOrTwo of
-                1 -> do
-                  let newOutput = 2
-                  let hull' = Map.insert pos v1 hull
-                  performProgramB ls (index + 2) rbase robot hull' newOutput
-                2 -> do
-                  let newOutput = 1
-                  let newDir = if v1 == 0 then (dir - 1) `mod` 4 else (dir + 1) `mod` 4
-                  let newPos = newPosFn pos newDir
-                  performProgramB ls (index + 2) rbase (newPos,newDir) hull newOutput
-
+        case outputOneOrTwo of
+          1 -> do
+            let newOutput = 2
+            let hull' = Map.insert pos v1 hull
+            performProgramB ls (index + 2) rbase robot hull' newOutput
+          2 -> do
+            let newOutput = 1
+            let newDir = if v1 == 0 then (dir - 1) `mod` 4 else (dir + 1) `mod` 4
+            let newPos = newPosFn pos newDir
+            performProgramB ls (index + 2) rbase (newPos,newDir) hull newOutput
       [_,5] -> do
         if v1 /= 0 then performProgramB ls (frI v2) rbase robot hull outputOneOrTwo
         else performProgramB ls (index + 3) rbase robot hull outputOneOrTwo
@@ -127,22 +122,6 @@ performProgramB ls index rbase robot@(pos,dir) hull outputOneOrTwo = do
         return (0,rbase,hull,(-1,ls))
 
 frI = fromInteger
-
--- getValues :: Int -> IntMap Integer -> [Integer] -> Integer-> [Integer]
--- getValues index ls [m3,m2,m1] rbase = [index3, ls ! (frI index2), ls ! (frI index1)]
---   where
---     index1 = case m1 of
---       2 -> rbase + (ls ! index)
---       1 -> toInteger index
---       0 -> ls ! index
---     index2 = case m2 of
---       2 -> rbase + (ls ! (index + 1))
---       1 -> toInteger $ index + 1
---       0 -> ls ! (index + 2)
---     index3 = case m3 of
---       2 -> rbase + (ls ! (index + 2))
---       1 -> toInteger $ index + 2
---       0 -> ls ! (index + 2)
 
 getValues :: Int -> IntMap Integer -> [Integer] -> Integer-> [Integer]
 getValues index ls [m3,m2,m1] rbase = [index3, ls ! (frI index2), ls ! (frI index1)]
