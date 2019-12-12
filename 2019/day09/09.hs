@@ -62,9 +62,7 @@ type Program = (Integer, Integer, (Int, IntMap Integer))
 -}
 
 (!) :: IntMap Integer -> Int -> Integer
-(!) mapp key = case mapp IntMap.!? key of
-  Just a -> a
-  Nothing -> 0
+(!) mapp key = IntMap.findWithDefault 0 key mapp
 
 performProgramB :: IntMap Integer -> Int -> Integer -> Integer -> IO Program
 performProgramB ls index input rbase = do
@@ -78,10 +76,7 @@ performProgramB ls index input rbase = do
         let newLs = (insert (frI v3) (v1 * v2) ls)
         performProgramB newLs (index + 4) input rbase
       [_,3] -> do
-        let index1 = case (last modes) of
-                      2 -> rbase + (ls ! (index + 1))
-                      1 -> (toInteger index) + 1
-                      0 -> ls ! (index + 1)
+        let index1 = calculateIndex (index + 1) ls (last modes) rbase
         let newLs = (insert (frI index1) input ls)
         performProgramB newLs (index + 2) input rbase
       [_,4] -> do
@@ -111,18 +106,16 @@ frI = fromInteger
 getValues :: Int -> IntMap Integer -> [Integer] -> Integer-> [Integer]
 getValues index ls [m3,m2,m1] rbase = [index3, ls ! (frI index2), ls ! (frI index1)]
   where
-    index1 = case m1 of
-      2 -> rbase + (ls ! index)
-      1 -> toInteger index
-      0 -> ls ! index
-    index2 = case m2 of
-      2 -> rbase + (ls ! (index + 1))
-      1 -> toInteger $ index + 1
-      0 -> ls ! (index + 2)
-    index3 = case m3 of
-      2 -> rbase + (ls ! (index + 2))
-      1 -> toInteger $ index + 2
-      0 -> ls ! (index + 2)
+    index1 = calculateIndex index ls m1 rbase
+    index2 = calculateIndex (index + 1) ls m2 rbase
+    index3 = calculateIndex (index + 2) ls m3 rbase
+
+calculateIndex :: Int -> IntMap Integer -> Integer -> Integer -> Integer
+calculateIndex index ls mode rbase = case mode of
+  2 -> rbase + (ls ! index)
+  1 -> toInteger index
+  0 -> ls ! index
+
 
 genNum :: Integer -> [Integer]
 genNum x = [mod (x `div` 10000) 10,
