@@ -23,12 +23,12 @@ test2 = do
 ----------- Code for part b ------------------
 mainB :: TYPE -> IO ()
 mainB input = do
-  things
+  putStrLn "Not yet implemented"
 ----------- Code for part b ------------------
 ----------- Code for part a ------------------
 mainA :: TYPE -> IO ()
 mainA input = do
-  things
+  putStrLn "Not yet implemented"
 ----------- Code for part a ------------------
 
 
@@ -38,5 +38,5 @@ readInput filePath = do
   input <- readFile filePath
   return $ formatInput input
 
-formatInput :: [String] -> TYPE
+formatInput :: String -> TYPE
 formatInput input = lines input
