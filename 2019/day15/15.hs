@@ -43,31 +43,58 @@ mainA ls = do
   print $ output state
   return ()
 
-type Program = (Integer, Integer,GameBoard,Int,(Int, IntMap Integer))
-
 (!) :: IntMap Integer -> Int -> Integer
 (!) mapp key = IntMap.findWithDefault 0 key mapp
 
-type GameBoard = Map Position Integer
+type World = Map Position Integer
 type Position = (Int,Int)
+type Direction = Int
 
 emptyEnv :: IntMap Integer -> Env
 emptyEnv prg = Env {
   rbase = 0,
   index = 0,
   output = [],
-  program = prg
+  program = prg,
+  world = Map.empty,
+  currPos = (0,0),
+  newPos = (0,0)
 }
 
 data Env = Env {
   rbase :: Integer,
   index :: Int,
   output :: [Integer],
-  program :: IntMap Integer
+  program :: IntMap Integer,
+  world :: World,
+  currPos :: Position,
+  newPos :: Position
 }
+
+addPos :: Position -> Position -> Position
+addPos (x1,y1) (x2,y2) = (x1 + x2, y1 + y2)
+
+getDirection :: Direction -> Position
+getDirection dir
+  | dir == north = (0,1)
+  | dir == south = (0,-1)
+  | dir == west = (-1, 0)
+  | dir == east = (1,0)
 
 setIndex :: Integer -> State Env ()
 setIndex i = modify $ \s -> s{index = (frI i)}
+
+setNewPos :: Direction -> State Env ()
+setNewPos dir = do
+  let dirPos = getDirection dir
+  oldPos <- gets newPos
+  modify $ \s -> s{newPos = addPos oldPos dirPos}
+
+setCurrPos :: Direction -> State Env ()
+setCurrPos dir = do
+  let dirPos = getDirection dir
+  oldPos <- gets currPos
+  modify $ \s -> s{newPos = addPos oldPos dirPos}
 
 updateRbase :: Integer -> State Env ()
 updateRbase i = do
@@ -89,8 +116,22 @@ saveOutput int = do
   outpt <- gets output
   modify $ \s -> s{output = int:outpt}
 
-input :: Integer
-input = 2
+input :: State Env Integer
+input = do
+  mapp <- gets world
+  return 2
+
+findUnexplored :: World -> Position -> Position
+findUnexplored world pos
+  | Map.notMember (addPos (getDirection north) pos) world = (addPos (getDirection north) pos)
+  | Map.notMember (addPos (getDirection south) pos) world   = (addPos (getDirection south) pos)
+  | Map.notMember (addPos (getDirection west) pos) world   = (addPos (getDirection west) pos)
+  | Map.notMember (addPos (getDirection east) pos) world   = (addPos (getDirection east) pos)
+
+north = 1
+south = 2
+west = 3
+east = 4
 
 performProgram :: State Env ()
 performProgram = do
@@ -110,7 +151,8 @@ performProgram = do
         performProgram
       [_,3] -> do
         let index1 = calculateIndex (ind + 1) prg (last modes) rbas
-        updatePrg (frI index1) input
+        inpt <- input
+        updatePrg (frI index1) inpt
         incrementIndex 2
         performProgram
       [_,4] -> do
