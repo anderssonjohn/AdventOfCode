@@ -1,42 +1,23 @@
-
-a :: IO ()
-a = do
-  input <- readInput "input.txt"
-  mainA input
-
-b :: IO ()
-b = do
-  input <- readInput "input.txt"
-  mainB input
-
-test1 :: IO ()
-test1 = do
-  input <- readInput "test1.txt"
-  mainA input
-
-test2 :: IO ()
-test2 = do
-  input <- readInput "test2.txt"
-  mainB input
-
-
------------ Code for part b ------------------
-mainB :: TYPE -> IO ()
-mainB input = do
+----------- Code for part two ------------------
+mainTwo :: IO ()
+mainTwo input = do
   putStrLn "Not yet implemented"
------------ Code for part b ------------------
------------ Code for part a ------------------
-mainA :: TYPE -> IO ()
-mainA input = do
+----------- Code for part two ------------------
+----------- Code for part one ------------------
+mainOne :: TYPE -> IO ()
+mainOne input = do
   putStrLn "Not yet implemented"
------------ Code for part a ------------------
+----------- Code for part one ------------------
 
 
 ----------- Input ----------------------------
-readInput :: String -> IO TYPE
-readInput filePath = do
-  input <- readFile filePath
+readInput :: IO TYPE
+readInput = do
+  input <- readFile "input.txt"
   return $ formatInput input
 
 formatInput :: String -> TYPE
 formatInput input = lines input
+
+type Type = Int
+type TYPE = [Type]
