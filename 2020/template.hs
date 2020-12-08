@@ -1,11 +1,11 @@
 ----------- Code for part two ------------------
-mainTwo :: IO ()
-mainTwo input = do
+two :: IO ()
+two = do
   putStrLn "Not yet implemented"
 ----------- Code for part two ------------------
 ----------- Code for part one ------------------
-mainOne :: TYPE -> IO ()
-mainOne input = do
+one :: IO ()
+one = do
   putStrLn "Not yet implemented"
 ----------- Code for part one ------------------
 
