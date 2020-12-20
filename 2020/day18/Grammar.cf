@@ -1,0 +1,11 @@
+Program. Prg ::= [ Exp ] ;
+separator  Exp "" ;
+
+EInt. Exp2 ::= Integer ;
+EMul. Exp  ::= Exp "*" Exp1 ;
+EAdd. Exp1 ::= Exp1 "+" Exp2 ;
+
+_. Exp2 ::= "(" Exp ")" ;
+_. Exp1 ::= Exp2 ;
+_. Exp  ::= Exp1 ;
+
