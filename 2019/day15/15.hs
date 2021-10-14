@@ -8,6 +8,7 @@ import qualified Data.IntMap as IntMap
 import Data.Map (Map)
 import qualified Data.Map as Map
 
+import Debug.Trace
 
 import Control.Monad.State
 
@@ -39,8 +40,9 @@ mainB ls = do
 mainA :: IntMap Integer -> IO ()
 mainA ls = do
   let env = emptyEnv ls
-  let state = execState performProgram env
-  print $ output state
+  -- let state = execState performProgram env
+  let world = evalState performProgram env
+  print world
   return ()
 
 (!) :: IntMap Integer -> Int -> Integer
@@ -56,7 +58,8 @@ emptyEnv prg = Env {
   index = 0,
   output = [],
   program = prg,
-  world = Map.empty,
+  -- world = Map.empty,
+  world = Map.insert (0, 0) 1 Map.empty,
   currPos = (0,0),
   newPos = (0,0)
 }
@@ -70,6 +73,15 @@ data Env = Env {
   currPos :: Position,
   newPos :: Position
 }
+
+instance Show Env where
+  show Env{rbase=rbase, index=index, world=world, currPos=currPos,newPos=newPos}
+    = "rbase: " ++ show rbase ++
+      "\nindex: " ++ show index ++
+      "\nworld: " ++ show world ++
+      "\ncurrPos: " ++ show currPos ++
+      "\nnewPos: " ++ show newPos ++ "\n\n"
+
 
 addPos :: Position -> Position -> Position
 addPos (x1,y1) (x2,y2) = (x1 + x2, y1 + y2)
@@ -90,11 +102,8 @@ setNewPos dir = do
   oldPos <- gets newPos
   modify $ \s -> s{newPos = addPos oldPos dirPos}
 
-setCurrPos :: Direction -> State Env ()
-setCurrPos dir = do
-  let dirPos = getDirection dir
-  oldPos <- gets currPos
-  modify $ \s -> s{newPos = addPos oldPos dirPos}
+setCurrPos :: Position -> State Env ()
+setCurrPos pos = modify $ \s -> s{currPos = pos}
 
 updateRbase :: Integer -> State Env ()
 updateRbase i = do
@@ -111,29 +120,81 @@ updatePrg ind val = do
   prg <- gets program
   modify $ \s -> s{program = IntMap.insert ind val prg}
 
-saveOutput :: Integer -> State Env ()
-saveOutput int = do
-  outpt <- gets output
-  modify $ \s -> s{output = int:outpt}
+-- saveOutput :: Integer -> State Env ()
+-- saveOutput int = do
+--   oldOutput <- gets output
+--   modify $ \s -> s{output = int:oldOutput}
 
-input :: State Env Integer
-input = do
-  mapp <- gets world
-  return 2
+-- getInput :: State Env Integer
+-- getInput = do
+--   mapp <- gets world -- TODO: this is where movement commands to the robot are issued
+--   return 2
 
-findUnexplored :: World -> Position -> Position
-findUnexplored world pos
-  | Map.notMember (addPos (getDirection north) pos) world = (addPos (getDirection north) pos)
-  | Map.notMember (addPos (getDirection south) pos) world   = (addPos (getDirection south) pos)
-  | Map.notMember (addPos (getDirection west) pos) world   = (addPos (getDirection west) pos)
-  | Map.notMember (addPos (getDirection east) pos) world   = (addPos (getDirection east) pos)
+-- findUnexplored :: World -> Position -> Position
+-- findUnexplored world pos
+--   | Map.notMember (addPos (getDirection north) pos) world = (addPos (getDirection north) pos)
+--   | Map.notMember (addPos (getDirection south) pos) world   = (addPos (getDirection south) pos)
+--   | Map.notMember (addPos (getDirection west) pos) world   = (addPos (getDirection west) pos)
+--   | Map.notMember (addPos (getDirection east) pos) world   = (addPos (getDirection east) pos)
 
+north, south, west, east :: Direction
 north = 1
 south = 2
 west = 3
 east = 4
 
-performProgram :: State Env ()
+allDirs :: [Int]
+allDirs = [north, south, west, east]
+
+-- Calculates which position to move in order to get from the current position to the new position
+getDir :: Position -> Position -> Direction
+getDir (x1, y1) (x2, y2)
+  | x1 < x2 = north
+  | x1 > x2 = south
+  | y1 > y2 = west
+  | y1 < y2 = east
+
+-- When an input command is wanted, map over all directions which are unexplored and do performProgram on them, then merge the resulting maps.
+
+mapelido :: Integer -> State Env World
+mapelido index1 = do
+  -- curPos <- trace ("enter mapelido") $ gets currPos
+  -- wrld <- trace ("get world, curPos: " ++ show curPos) gets world
+  -- let newPos' = trace ("mapping dirs") map (\dir -> addPos curPos (getDirection dir)) allDirs
+  -- let newPoss = trace ("filtering") filter (flip Map.notMember wrld) newPos'
+  -- startState <- trace ("get startState, world: " ++ show wrld) get
+
+  -- let states = trace ("startState: " ++ show startState) map (\pos -> execState (doInput index1 curPos pos) startState) newPoss
+  -- let newStates = trace ("calculate newStates") map (execState performProgram) (trace (show (states)) states)
+  -- let a = mergeWorlds newStates
+  -- return $ trace (show a) a
+  curPos <- gets currPos
+  wrld <- gets world
+  let newPos' = map (\dir -> addPos curPos (getDirection dir)) allDirs
+  let newPoss = filter (flip Map.notMember wrld) newPos'
+  startState <- get
+
+  let states = map (\pos -> execState (doInput index1 curPos pos) startState) newPoss
+  let newStates = map (execState performProgram) (trace (show (states)) states)
+  let a = mergeWorlds newStates
+  return a
+
+doInput :: Integer -> Position -> Position -> State Env ()
+doInput index1 curPos pos = do
+        let inp = trace ("do input") toInteger $ getDir curPos pos
+        let input = trace (show inp) inp
+        updatePrg (frI index1) inp
+        setNewPos $ frI input
+        incrementIndex 2
+        -- get
+
+
+mergeWorlds :: [Env] -> World
+mergeWorlds envs = Map.unions worlds
+  where
+    worlds = map world envs
+
+performProgram :: State Env World
 performProgram = do
     ind <- gets index
     prg <- gets program
@@ -151,14 +212,26 @@ performProgram = do
         performProgram
       [_,3] -> do
         let index1 = calculateIndex (ind + 1) prg (last modes) rbas
-        inpt <- input
-        updatePrg (frI index1) inpt
-        incrementIndex 2
-        performProgram
+        -- input <- getInput
+        -- updatePrg (frI index1) input
+        -- incrementIndex 2
+        -- let stat = get
+        -- get >>= \stat -> trace (show stat) $ mapelido index1
+        trace ("recurse, index1: " ++ show index1) mapelido index1
       [_,4] -> do
-        saveOutput v1
-        incrementIndex 2
-        performProgram
+        let output = trace (show v1) v1
+        newPos' <- gets newPos
+        world' <- gets world
+        let newWorld = Map.insert newPos' output world'
+        case output of
+          0 -> return newWorld
+          1 -> do
+            modify $ \s -> s{world = newWorld}
+            setCurrPos newPos'
+            incrementIndex 2
+            trace ("good") performProgram
+          2 -> return newWorld
+        -- saveOutput v1
       [_,5] -> do
         if v1 /= 0 then setIndex v2
         else incrementIndex 3
@@ -182,7 +255,7 @@ performProgram = do
         incrementIndex 2
         performProgram
       [9,9] -> do
-        return ()
+        trace ("this should never happen") gets world
 
 frI = fromInteger
 
