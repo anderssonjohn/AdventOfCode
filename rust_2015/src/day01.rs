@@ -1,9 +1,7 @@
-use std::fs::File;
-use std::io::prelude::*;
-use std::path::Path;
+use crate::utils::read_file;
 
 pub fn main() {
-    let input = read_file("input/day01.txt");
+    let input = read_file("day01");
     let mut index = 0;
     let mut final_index = 0;
     let count = input.chars().fold(0, |count, char| {
@@ -15,11 +13,4 @@ pub fn main() {
     });
     println!("{}", final_index);
     println!("{}", count);
-}
-
-fn read_file (path: &str) -> String {
-    let mut file = File::open(Path::new(path)).unwrap();
-    let mut str = String::new();
-    file.read_to_string(&mut str).unwrap();
-    return str
 }
